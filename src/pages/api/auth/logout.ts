@@ -1,6 +1,7 @@
 import { serialize } from 'cookie';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PostAuthError } from '@src/api/auth/AuthApi.types';
+import { ACCESS_TOKEN_KEY } from '@src/constants/api/authKey';
 
 const ApiAuthLogoutHandler = async (req: NextApiRequest, res: NextApiResponse<null | PostAuthError>) => {
   if (req.method !== 'POST') {
@@ -8,7 +9,7 @@ const ApiAuthLogoutHandler = async (req: NextApiRequest, res: NextApiResponse<nu
   }
 
   try {
-    const cookie = serialize('doeat_pb_access_token', '', {
+    const cookie = serialize(ACCESS_TOKEN_KEY, '', {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
       expires: new Date(0),

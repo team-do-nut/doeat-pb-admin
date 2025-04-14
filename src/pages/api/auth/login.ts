@@ -2,6 +2,7 @@ import { serialize } from 'cookie';
 import { SignJWT } from 'jose';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PostAuthError, PostAuthLoginRequest, PostAuthLoginResponse } from '@src/api/auth/AuthApi.types';
+import { ACCESS_TOKEN_KEY } from '@src/constants/api/authKey';
 
 const ApiAuthLoginHandler = async (
   req: NextApiRequest,
@@ -28,7 +29,7 @@ const ApiAuthLoginHandler = async (
       .setExpirationTime('24h')
       .sign(new TextEncoder().encode(process.env.NEXT_PUBLIC_JWT_SECRET_KEY));
 
-    const cookie = serialize('doeat_pb_access_token', token, {
+    const cookie = serialize(ACCESS_TOKEN_KEY, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
       maxAge: 60 * 60 * 24,
