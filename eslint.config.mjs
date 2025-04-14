@@ -48,6 +48,7 @@ export default defineConfig([
           pathGroups: [
             { pattern: '@src/**', group: 'internal' },
             { pattern: 'react', group: 'external', position: 'before' },
+            { pattern: 'next/**', group: 'external', position: 'before' },
           ],
           pathGroupsExcludedImportTypes: ['react'],
           groups: ['builtin', 'external', 'internal', 'sibling', 'parent', 'index'],

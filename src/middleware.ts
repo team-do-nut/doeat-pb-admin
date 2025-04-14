@@ -1,5 +1,5 @@
-import { jwtVerify } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
 import { ACCESS_TOKEN_KEY } from './constants/api/authKey';
 
 export async function middleware(request: NextRequest) {
