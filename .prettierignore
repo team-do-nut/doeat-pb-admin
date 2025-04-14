@@ -1,0 +1,9 @@
+# Build artifacts
+.next/
+_next/
+__tmp__/
+dist/
+node_modules/
+out/
+
+.github/
