@@ -32,7 +32,7 @@ const ApiAuthLoginHandler = async (
     const cookie = serialize(ACCESS_TOKEN_KEY, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
-      maxAge: 60 * 60 * 24,
+      maxAge: 60 * 60 * 24 * 7, // 7일
       path: '/',
       sameSite: 'strict',
     });
