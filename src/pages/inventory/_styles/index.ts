@@ -49,8 +49,18 @@ const FilterContainer = styled.div`
   align-items: flex-end;
 `;
 
+const FilterWrapper = styled.div`
+  width: 300px;
+  display: flex;
+  align-items: center;
+  column-gap: 20px;
+  color: #333;
+`;
+
 const FilterInputContainer = styled.div`
-  width: 200px;
+  display: flex;
+  align-items: center;
+  column-gap: 20px;
 `;
 
 const FilterTitle = styled.h2`
@@ -327,6 +337,7 @@ const InventoryComponents = {
   PageTitle,
   FilterSection,
   FilterContainer,
+  FilterWrapper,
   FilterInputContainer,
   FilterTitle,
   TableSection,

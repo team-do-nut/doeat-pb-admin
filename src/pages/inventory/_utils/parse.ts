@@ -1,5 +1,12 @@
-import { PbItemTaxType, PbItemType } from '@src/api/pb/inventory/PbInventory.types';
-import { INVENTORY_ITEM_TYPE_SELECT_OPTIONS, INVENTORY_TAX_TYPE_SELECT_OPTIONS } from '../_core/options';
+import { InventoryType, PbItemTaxType, PbItemType } from '@src/api/pb/inventory/PbInventory.types';
+import {
+  INVENTORY_ITEM_TYPE_SELECT_OPTIONS,
+  INVENTORY_TAX_TYPE_SELECT_OPTIONS,
+  INVENTORY_TYPE_SELECT_OPTIONS,
+} from '../_core/options';
+
+export const getInventoryItemLabel = (value: InventoryType): string =>
+  INVENTORY_TYPE_SELECT_OPTIONS.find((item) => item.value === value)?.label || '';
 
 export const getInventoryTaxTypeLabel = (value: PbItemTaxType): string =>
   INVENTORY_TAX_TYPE_SELECT_OPTIONS.find((item) => item.value === value)?.label || '';

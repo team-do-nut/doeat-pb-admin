@@ -11,6 +11,7 @@ import SmallSquareButton from '@src/components/button/SmallSquareButton';
 import FormInputSelect from '@src/components/form/FormInputSelect';
 import FormInputText from '@src/components/form/FormInputText';
 
+import { isValidEmpty } from '@src/utils/valid';
 import InventoryNavigation from '../_components/InventoryNavigation';
 import { INVENTORY_ITEM_TYPE_SELECT_OPTIONS, INVENTORY_TAX_TYPE_SELECT_OPTIONS } from '../_core/options';
 import S from '../_styles';
@@ -20,8 +21,8 @@ interface InventoryItemFormFields {
   itemData: {
     name: string;
     unit: string;
-    type: PbItemType;
-    taxType: PbItemTaxType;
+    type: PbItemType | '';
+    taxType: PbItemTaxType | '';
   }[];
 }
 
@@ -32,8 +33,8 @@ const InventoryItemPage = () => {
         {
           name: '',
           unit: '',
-          type: 'INGREDIENT',
-          taxType: 'NONE',
+          type: '',
+          taxType: '',
         },
       ],
     },
@@ -65,7 +66,7 @@ const InventoryItemPage = () => {
 
   /* 단가_생성 */
   const onItemAppendClick = useCallback(() => {
-    appendItemData({ name: '', taxType: 'NONE', type: 'INGREDIENT', unit: '' });
+    appendItemData({ name: '', taxType: '', type: '', unit: '' });
   }, [appendItemData]);
 
   const onItemRemoveClick = useCallback(
@@ -78,10 +79,15 @@ const InventoryItemPage = () => {
 
   const onItemSubmit = useCallback<SubmitHandler<InventoryItemFormFields>>(
     ({ itemData }) => {
+      if (itemData.some(({ name, taxType, type, unit }) => !isValidEmpty([name, taxType, type, unit]))) {
+        alert('입력을 전부 채워주세요');
+        return;
+      }
+
       const transformedData: PostInventoryItemRequest[] = itemData.map(({ name, taxType, type, unit }) => ({
         name,
-        taxType,
-        type,
+        taxType: taxType as PbItemTaxType,
+        type: type as PbItemType,
         unit,
       }));
 
@@ -110,6 +116,13 @@ const InventoryItemPage = () => {
               <div style={{ marginBottom: '40px' }}>
                 <S.TableContainer>
                   <S.Table>
+                    <colgroup>
+                      <col width="10%" />
+                      <col width="10%" />
+                      <col width="10%" />
+                      <col width="10%" />
+                      <col width="10%" />
+                    </colgroup>
                     <S.TableHeader>
                       <tr>
                         <S.TableHeaderCell>이름</S.TableHeaderCell>

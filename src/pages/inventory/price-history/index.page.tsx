@@ -10,6 +10,7 @@ import Navigation from '@src/components/Navigation';
 import BigSquareButton from '@src/components/button/BigSquareButton';
 import FormInputDateRange from '@src/components/form/FormInputDateRange';
 import FormInputText from '@src/components/form/FormInputText';
+import { isValidEmpty, isValidNumber } from '@src/utils/valid';
 
 import InventoryNavigation from '../_components/InventoryNavigation';
 import S from '../_styles';
@@ -69,6 +70,17 @@ const InventoryPriceHistoryPage = () => {
   const onUpsertClick = useCallback(
     (dateIndex: number) => () => {
       const values = getValues(`historyData.${dateIndex}`);
+
+      if (values.some(({ date, price }) => !isValidEmpty([date, price]))) {
+        alert('입력을 전부 채워주세요');
+        return;
+      }
+
+      if (values.some(({ price }) => !isValidNumber(price))) {
+        alert('가격은 숫자만 입력해주세요');
+        return;
+      }
+
       const transformedData: PostItemPriceHistoryCreateRequest[] = values.map(({ date, itemId, price }) => ({
         date,
         itemId,
