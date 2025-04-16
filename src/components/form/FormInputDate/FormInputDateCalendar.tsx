@@ -165,7 +165,7 @@ const FormInputDateCalendar = forwardRef<HTMLDivElement, DateCalendarProps>(({ m
                   key={data.value}
                   onClick={() => onDateClick(data.value, data.status)}
                   $status={data.status}
-                  $isSelected={data.value === date}
+                  selected={data.value === date}
                 >
                   <span>{data.day}</span>
                 </S.CalendarTd>

@@ -11,7 +11,7 @@ export const NavContainer = styled.nav`
   padding: 0 20px;
 `;
 
-export const StyledLink = styled(Link)<{ $isSelected?: boolean }>`
+export const StyledLink = styled(Link)<{ selected?: boolean }>`
   position: relative;
   display: flex;
   align-items: center;
@@ -20,8 +20,8 @@ export const StyledLink = styled(Link)<{ $isSelected?: boolean }>`
   padding: 0 1.5rem;
   text-decoration: none;
   font-size: 0.9rem;
-  font-weight: ${(props) => (props.$isSelected ? '600' : '500')};
-  color: ${(props) => (props.$isSelected ? '#2C5282' : '#4A5568')};
+  font-weight: ${({ selected }) => (selected ? '600' : '500')};
+  color: ${({ selected }) => (selected ? '#2C5282' : '#4A5568')};
   transition: all 0.2s ease;
 
   &:after {
@@ -32,8 +32,8 @@ export const StyledLink = styled(Link)<{ $isSelected?: boolean }>`
     right: 0;
     height: 2px;
     background-color: #3182ce;
-    opacity: ${(props) => (props.$isSelected ? '1' : '0')};
-    transform: ${(props) => (props.$isSelected ? 'scaleX(1)' : 'scaleX(0)')};
+    opacity: ${({ selected }) => (selected ? '1' : '0')};
+    transform: ${({ selected }) => (selected ? 'scaleX(1)' : 'scaleX(0)')};
     transition:
       transform 0.2s ease,
       opacity 0.2s ease;
@@ -44,7 +44,7 @@ export const StyledLink = styled(Link)<{ $isSelected?: boolean }>`
     background-color: rgba(237, 242, 247, 0.5);
 
     &:after {
-      opacity: ${(props) => (props.$isSelected ? '1' : '0.5')};
+      opacity: ${({ selected }) => (selected ? '1' : '0.5')};
       transform: scaleX(1);
     }
   }

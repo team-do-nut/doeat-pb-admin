@@ -95,14 +95,14 @@ export const CalendarTr = styled.div`
   }
 `;
 
-export const CalendarTd = styled.div<{ $status: CalendarDataStatus; $isSelected: boolean }>`
+export const CalendarTd = styled.div<{ $status: CalendarDataStatus; selected: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 30px;
   height: 30px;
   border-radius: 15px;
-  background-color: ${({ $isSelected }) => ($isSelected ? '#fee34c' : 'transparent')};
+  background-color: ${({ selected }) => (selected ? '#fee34c' : 'transparent')};
 
   cursor: ${({ $status }) => ($status === CalendarDataStatus.ThisMonth ? 'pointer' : 'auto')};
   z-index: 2;

@@ -18,17 +18,17 @@ export const NavLinks = styled.div`
   gap: 2rem;
 `;
 
-export const StyledLink = styled(Link)<{ $isSelected?: boolean }>`
+export const StyledLink = styled(Link)<{ selected?: boolean }>`
   text-decoration: none;
-  color: ${(props) => (props.$isSelected ? '#3182ce' : '#333')};
-  font-weight: ${(props) => (props.$isSelected ? '600' : '500')};
+  color: ${({ selected }) => (selected ? '#3182ce' : '#333')};
+  font-weight: ${({ selected }) => (selected ? '600' : '500')};
   position: relative;
   padding: 0.5rem 0;
 
   &:after {
     content: '';
     position: absolute;
-    width: ${(props) => (props.$isSelected ? '100%' : '0')};
+    width: ${({ selected }) => (selected ? '100%' : '0')};
     height: 2px;
     bottom: 0;
     left: 0;

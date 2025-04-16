@@ -7,13 +7,13 @@ const InventoryNavigation: FC = () => {
 
   return (
     <S.NavContainer>
-      <S.StyledLink href="/inventory/record-history" $isSelected={pathname === '/inventory/record-history'}>
+      <S.StyledLink href="/inventory/record-history" selected={pathname === '/inventory/record-history'}>
         재고
       </S.StyledLink>
-      <S.StyledLink href="/inventory/price-history" $isSelected={pathname === '/inventory/price-history'}>
+      <S.StyledLink href="/inventory/price-history" selected={pathname === '/inventory/price-history'}>
         단가
       </S.StyledLink>
-      <S.StyledLink href="/inventory/item" $isSelected={pathname === '/inventory/item'}>
+      <S.StyledLink href="/inventory/item" selected={pathname === '/inventory/item'}>
         재료 품목
       </S.StyledLink>
     </S.NavContainer>

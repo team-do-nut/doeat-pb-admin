@@ -32,10 +32,10 @@ const Navigation: FC = () => {
   return (
     <S.NavContainer>
       <S.NavLinks>
-        <S.StyledLink href="/" $isSelected={pathname === '/'}>
+        <S.StyledLink href="/" selected={pathname === '/'}>
           홈
         </S.StyledLink>
-        <S.StyledLink href="/inventory" $isSelected={pathname.startsWith('/inventory')}>
+        <S.StyledLink href="/inventory" selected={pathname.startsWith('/inventory')}>
           재고 관리
         </S.StyledLink>
       </S.NavLinks>
