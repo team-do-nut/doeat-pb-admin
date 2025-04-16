@@ -1,8 +1,8 @@
-import { GetStaticProps } from 'next';
+import { GetServerSideProps } from 'next';
 
 const InventoryPage = () => null;
 
-export const getStaticProps: GetStaticProps = async () => ({
+export const getServerSideProps: GetServerSideProps = async () => ({
   redirect: {
     destination: '/inventory/record-history',
     permanent: true,
