@@ -8,11 +8,7 @@ const apiClient = axios.create({
 let accessToken: string | null = null;
 
 apiClient.interceptors.request.use(
-  (config) => {
-    // eslint-disable-next-line no-param-reassign
-    if (accessToken) config.headers['Authorization'] = `Bearer ${accessToken}`;
-    return config;
-  },
+  (config) => config,
   (err) => Promise.reject(err),
 );
 
