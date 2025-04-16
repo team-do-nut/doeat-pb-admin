@@ -108,7 +108,7 @@ const InventoryRecordHistoryPage = () => {
   );
 
   useEffect(() => {
-    if (allItemsData) {
+    if (allItemsData && allItemsData.length > 0) {
       const dates: string[] = [];
       const start = dayjs(startDate);
       const end = dayjs(endDate);
