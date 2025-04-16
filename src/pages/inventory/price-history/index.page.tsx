@@ -93,7 +93,7 @@ const InventoryPriceHistoryPage = () => {
   );
 
   useEffect(() => {
-    if (allItemsData) {
+    if (allItemsData && allItemsData.length > 0) {
       const dates: string[] = [];
       const start = dayjs(startDate);
       const end = dayjs(endDate);
@@ -168,6 +168,7 @@ const InventoryPriceHistoryPage = () => {
               <div>
                 {itemPriceHistoryDataStatus === 'success' &&
                   allItemsDataStatus === 'success' &&
+                  historyDataFields.length > 0 &&
                   historyDataFields.map((dateGroup, dateIndex) => {
                     const dateItems = getValues(`historyData.${dateIndex}`);
 
@@ -235,6 +236,10 @@ const InventoryPriceHistoryPage = () => {
                       </div>
                     );
                   })}
+
+                {itemPriceHistoryDataStatus === 'success' &&
+                  allItemsDataStatus === 'success' &&
+                  historyDataFields.length === 0 && <S.NoDataMessage>데이터가 존재하지 않습니다.</S.NoDataMessage>}
 
                 {(itemPriceHistoryDataStatus === 'pending' || allItemsDataStatus === 'pending') && (
                   <S.NoDataMessage>로딩중</S.NoDataMessage>

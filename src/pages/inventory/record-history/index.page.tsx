@@ -289,6 +289,10 @@ const InventoryRecordHistoryPage = () => {
                   );
                 })}
 
+              {inventoryRecordsDataStatus === 'success' &&
+                allItemsDataStatus === 'success' &&
+                newDataFields.length === 0 && <S.NoDataMessage>데이터가 존재하지 않습니다.</S.NoDataMessage>}
+
               {(inventoryRecordsDataStatus === 'pending' || allItemsDataStatus === 'pending') && (
                 <S.NoDataMessage>로딩중</S.NoDataMessage>
               )}
