@@ -171,7 +171,7 @@ const InventoryItemPage = () => {
                     행 추가하기
                   </BigSquareButton>
                   <BigSquareButton style={{ width: '100%' }} variant="primary" onClick={handleSubmit(onItemSubmit)}>
-                    단가 생성하기
+                    재료 품목 생성하기
                   </BigSquareButton>
                 </S.BigSquareButtonWrapper>
               </div>

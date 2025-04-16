@@ -1,23 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 
 import PbInventoryApi from '@src/api/pb/inventory/PbInventory';
-import {
-  GetItemPriceHistoryResponse,
-  PostItemPriceHistoryCreateRequest,
-} from '@src/api/pb/inventory/PbInventory.types';
+import { PostItemPriceHistoryCreateRequest } from '@src/api/pb/inventory/PbInventory.types';
 import Navigation from '@src/components/Navigation';
 import BigSquareButton from '@src/components/button/BigSquareButton';
-import FormInputDate from '@src/components/form/FormInputDate';
 import FormInputDateRange from '@src/components/form/FormInputDateRange';
 import FormInputText from '@src/components/form/FormInputText';
 
 import InventoryNavigation from '../_components/InventoryNavigation';
-import InventoryTab from '../_components/InventoryTab';
-import { INVENTORY_ITEM_HISTORY_TAB_ITEMS } from '../_core/options';
 import S from '../_styles';
 
 interface InventoryPriceHistoryFormFields {
@@ -25,18 +19,16 @@ interface InventoryPriceHistoryFormFields {
     itemId: number;
     itemName: string;
     date: string;
+    unit: string;
     price: string;
-  }[];
+  }[][];
 }
 
 const InventoryPriceHistoryPage = () => {
-  const [activeTab, setActiveTab] = useState<number>(0);
-
-  const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [startDate, setStartDate] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
   const [endDate, setEndDate] = useState(dayjs().format('YYYY-MM-DD'));
 
-  const { register, control, handleSubmit, setValue } = useForm<InventoryPriceHistoryFormFields>({
+  const { register, control, setValue, getValues } = useForm<InventoryPriceHistoryFormFields>({
     defaultValues: {
       historyData: [],
     },
@@ -68,44 +60,16 @@ const InventoryPriceHistoryPage = () => {
     },
   });
 
-  /* 공통_탭 */
-  const onTabChange = useCallback((value: number) => {
-    setActiveTab(value);
-  }, []);
-
-  /* 단가_히스토리_조회 */
-  const groupedItemPriceHistoryData = useMemo(() => {
-    if (!itemPriceHistoryData) return null;
-
-    const groupedByDate = itemPriceHistoryData?.reduce<Record<string, GetItemPriceHistoryResponse[]>>((acc, item) => {
-      if (!acc[item.date]) {
-        acc[item.date] = [];
-      }
-      acc[item.date].push(item);
-      return acc;
-    }, {});
-
-    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-    return {
-      groupedByDate,
-      sortedDates,
-    };
-  }, [itemPriceHistoryData]);
-
   const onDateRangeChange = useCallback(({ startDate, endDate }: { startDate: string; endDate: string }) => {
     setStartDate(startDate);
     setEndDate(endDate);
   }, []);
 
   /*단가_히스토리_추가 */
-  const onDateChange = useCallback((value: string) => {
-    setDate(value);
-  }, []);
-
-  const onAddSubmit = useCallback<SubmitHandler<InventoryPriceHistoryFormFields>>(
-    ({ historyData }) => {
-      const transformedData: PostItemPriceHistoryCreateRequest[] = historyData.map(({ date, itemId, price }) => ({
+  const onUpsertClick = useCallback(
+    (dateIndex: number) => () => {
+      const values = getValues(`historyData.${dateIndex}`);
+      const transformedData: PostItemPriceHistoryCreateRequest[] = values.map(({ date, itemId, price }) => ({
         date,
         itemId,
         price: Number(price),
@@ -113,22 +77,58 @@ const InventoryPriceHistoryPage = () => {
 
       postItemPriceHistory(transformedData);
     },
-    [postItemPriceHistory],
+    [getValues, postItemPriceHistory],
   );
 
   useEffect(() => {
     if (allItemsData) {
-      const transformedData: InventoryPriceHistoryFormFields['historyData'] = allItemsData.map(({ id, name }) => ({
-        itemId: id,
-        itemName: name,
-        // 추가해야할 것
-        date,
-        price: '0',
-      }));
+      const dates: string[] = [];
+      const start = dayjs(startDate);
+      const end = dayjs(endDate);
+
+      let currentDate = start;
+      while (currentDate.isSame(end) || currentDate.isBefore(end)) {
+        dates.push(currentDate.format('YYYY-MM-DD'));
+        currentDate = currentDate.add(1, 'day');
+      }
+
+      dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime()); // 내림차순
+
+      const transformedData: InventoryPriceHistoryFormFields['historyData'] = dates.map((dateStr) =>
+        allItemsData.map(({ id, name, unit }) => ({
+          itemId: id,
+          itemName: name,
+          date: dateStr,
+          price: '0', // 기본 가격은 0
+          unit,
+        })),
+      );
+
+      if (itemPriceHistoryData && itemPriceHistoryData.length > 0) {
+        for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
+          const currentDate = dates[dateIndex];
+
+          const currentDatePriceHistory = itemPriceHistoryData.filter((item) => item.date === currentDate);
+
+          for (let itemIndex = 0; itemIndex < transformedData[dateIndex].length; itemIndex++) {
+            const currentItem = transformedData[dateIndex][itemIndex];
+
+            const historyItem = currentDatePriceHistory.find((histItem) => histItem.itemId === currentItem.itemId);
+
+            if (historyItem) {
+              transformedData[dateIndex][itemIndex] = {
+                ...currentItem,
+
+                price: String(historyItem.price),
+              };
+            }
+          }
+        }
+      }
 
       setValue('historyData', transformedData);
     }
-  }, [allItemsData, date, itemPriceHistoryData, setValue]);
+  }, [allItemsData, startDate, endDate, itemPriceHistoryData, setValue]);
 
   return (
     <>
@@ -141,141 +141,98 @@ const InventoryPriceHistoryPage = () => {
       <S.PageContainer>
         <Navigation />
         <InventoryNavigation />
-        <InventoryTab items={INVENTORY_ITEM_HISTORY_TAB_ITEMS} activeTab={activeTab} onTabChange={onTabChange} />
 
         <S.ContentContainer>
           <S.SectionCardWrapper>
-            {activeTab === 0 && (
-              <S.SectionCard>
-                <S.PageTitle>단가 현황</S.PageTitle>
+            <S.SectionCard>
+              <S.PageTitle>단가 현황</S.PageTitle>
 
-                <S.FilterContainer>
-                  <S.FilterInputContainer>
-                    <FormInputDateRange value={{ startDate, endDate }} onChange={onDateRangeChange} />
-                  </S.FilterInputContainer>
-                </S.FilterContainer>
+              <S.FilterContainer>
+                <S.FilterInputContainer>
+                  <FormInputDateRange value={{ startDate, endDate }} onChange={onDateRangeChange} />
+                </S.FilterInputContainer>
+              </S.FilterContainer>
 
-                <div>
-                  {itemPriceHistoryDataStatus === 'success' &&
-                    !!groupedItemPriceHistoryData &&
-                    groupedItemPriceHistoryData.sortedDates.length > 0 &&
-                    groupedItemPriceHistoryData.sortedDates.map((date) => (
-                      <div key={date}>
+              <div>
+                {itemPriceHistoryDataStatus === 'success' &&
+                  allItemsDataStatus === 'success' &&
+                  historyDataFields.map((dateGroup, dateIndex) => {
+                    const dateItems = getValues(`historyData.${dateIndex}`);
+
+                    const { date } = dateItems[0];
+
+                    return (
+                      <div key={dateGroup.id}>
                         <S.DateHeader>{date} 단가 현황</S.DateHeader>
                         <S.TableContainer>
                           <S.Table>
                             <colgroup>
-                              <col width="10%" />
-                              <col width="10%" />
-                              <col width="10%" />
-                              <col width="10%" />
+                              <col width="20%" />
+                              <col width="20%" />
+                              <col width="20%" />
+                              <col width="20%" />
+                              <col width="20%" />
                             </colgroup>
                             <S.TableHeader>
                               <tr>
-                                <S.TableHeaderCell>ID</S.TableHeaderCell>
                                 <S.TableHeaderCell>아이템 ID</S.TableHeaderCell>
                                 <S.TableHeaderCell>이름</S.TableHeaderCell>
+                                <S.TableHeaderCell>날짜</S.TableHeaderCell>
+                                <S.TableHeaderCell>단위</S.TableHeaderCell>
                                 <S.TableHeaderCell>가격</S.TableHeaderCell>
                               </tr>
                             </S.TableHeader>
                             <S.TableBody>
-                              {groupedItemPriceHistoryData.groupedByDate[date].map((item) => (
-                                <S.TableRow key={item.id}>
+                              {dateItems.map((item, itemIndex) => (
+                                <S.TableRow key={`${item.itemId}-${item.date}`}>
                                   <S.TableCell>
-                                    <FormInputText readOnly defaultValue={item.id} />
+                                    <FormInputText
+                                      readOnly
+                                      {...register(`historyData.${dateIndex}.${itemIndex}.itemId`)}
+                                    />
                                   </S.TableCell>
                                   <S.TableCell>
-                                    <FormInputText readOnly defaultValue={item.itemId} />
+                                    <FormInputText
+                                      readOnly
+                                      {...register(`historyData.${dateIndex}.${itemIndex}.itemName`)}
+                                    />
                                   </S.TableCell>
                                   <S.TableCell>
-                                    <FormInputText readOnly defaultValue={item.itemName} />
+                                    <FormInputText
+                                      readOnly
+                                      {...register(`historyData.${dateIndex}.${itemIndex}.date`)}
+                                    />
                                   </S.TableCell>
                                   <S.TableCell>
-                                    <FormInputText readOnly defaultValue={item.price} />
+                                    <FormInputText
+                                      readOnly
+                                      {...register(`historyData.${dateIndex}.${itemIndex}.unit`)}
+                                    />
+                                  </S.TableCell>
+                                  <S.TableCell>
+                                    <FormInputText {...register(`historyData.${dateIndex}.${itemIndex}.price`)} />
                                   </S.TableCell>
                                 </S.TableRow>
                               ))}
                             </S.TableBody>
                           </S.Table>
                         </S.TableContainer>
+                        <BigSquareButton style={{ width: '100%' }} variant="primary" onClick={onUpsertClick(dateIndex)}>
+                          저장 및 수정
+                        </BigSquareButton>
                       </div>
-                    ))}
+                    );
+                  })}
 
-                  {itemPriceHistoryDataStatus === 'success' &&
-                    (!groupedItemPriceHistoryData || itemPriceHistoryData.length === 0) && (
-                      <S.NoDataMessage>단가 히스토리 데이터가 존재하지 않습니다.</S.NoDataMessage>
-                    )}
+                {(itemPriceHistoryDataStatus === 'pending' || allItemsDataStatus === 'pending') && (
+                  <S.NoDataMessage>로딩중</S.NoDataMessage>
+                )}
 
-                  {itemPriceHistoryDataStatus === 'pending' && <S.NoDataMessage>로딩중</S.NoDataMessage>}
-
-                  {itemPriceHistoryDataStatus === 'error' && (
-                    <S.NoDataMessage>데이터를 불러오는데 실패했습니다</S.NoDataMessage>
-                  )}
-                </div>
-              </S.SectionCard>
-            )}
-
-            {activeTab === 1 && (
-              <S.SectionCard>
-                <S.PageTitle>단가 추가</S.PageTitle>
-
-                <S.FilterContainer>
-                  <S.FilterInputContainer>
-                    <FormInputDate value={date} onChange={onDateChange} />
-                  </S.FilterInputContainer>
-                </S.FilterContainer>
-
-                <div style={{ marginBottom: '40px' }}>
-                  <S.TableContainer>
-                    <S.Table>
-                      <S.TableHeader>
-                        <tr>
-                          <S.TableHeaderCell>아이템 ID</S.TableHeaderCell>
-                          <S.TableHeaderCell>이름</S.TableHeaderCell>
-                          <S.TableHeaderCell>날짜</S.TableHeaderCell>
-                          <S.TableHeaderCell>가격</S.TableHeaderCell>
-                        </tr>
-                      </S.TableHeader>
-
-                      <S.TableBody>
-                        {allItemsDataStatus === 'success' &&
-                          historyDataFields.length > 0 &&
-                          historyDataFields.map(({ id }, index) => (
-                            <S.TableRow key={id}>
-                              <S.TableCell>
-                                <FormInputText readOnly {...register(`historyData.${index}.itemId`)} />
-                              </S.TableCell>
-                              <S.TableCell>
-                                <FormInputText readOnly {...register(`historyData.${index}.itemName`)} />
-                              </S.TableCell>
-                              <S.TableCell>
-                                <FormInputText readOnly {...register(`historyData.${index}.date`)} />
-                              </S.TableCell>
-                              <S.TableCell>
-                                <FormInputText {...register(`historyData.${index}.price`)} />
-                              </S.TableCell>
-                            </S.TableRow>
-                          ))}
-                      </S.TableBody>
-                    </S.Table>
-                  </S.TableContainer>
-
-                  <BigSquareButton style={{ width: '100%' }} variant="primary" onClick={handleSubmit(onAddSubmit)}>
-                    히스토리 생성하기
-                  </BigSquareButton>
-
-                  {allItemsDataStatus === 'success' && allItemsData.length === 0 && (
-                    <S.NoDataMessage>데이터가 없습니다.</S.NoDataMessage>
-                  )}
-
-                  {allItemsDataStatus === 'pending' && <S.NoDataMessage>로딩중</S.NoDataMessage>}
-
-                  {allItemsDataStatus === 'error' && (
-                    <S.NoDataMessage>데이터를 불러오는데 실패했습니다.</S.NoDataMessage>
-                  )}
-                </div>
-              </S.SectionCard>
-            )}
+                {(itemPriceHistoryDataStatus === 'error' || allItemsDataStatus === 'error') && (
+                  <S.NoDataMessage>데이터를 불러오는데 실패했습니다</S.NoDataMessage>
+                )}
+              </div>
+            </S.SectionCard>
           </S.SectionCardWrapper>
         </S.ContentContainer>
       </S.PageContainer>

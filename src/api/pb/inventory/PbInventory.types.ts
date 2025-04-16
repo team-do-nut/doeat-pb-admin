@@ -1,5 +1,5 @@
 export type InventoryType = 'INCOME' | 'STOCK';
-export type PbItemType = 'INGREDIENT' | 'PACKAGING';
+export type PbItemType = 'INGREDIENT' | 'PACKAGING' | 'MIXTURE';
 export type PbItemTaxType = 'TAX' | 'NONE';
 
 /* Record */
