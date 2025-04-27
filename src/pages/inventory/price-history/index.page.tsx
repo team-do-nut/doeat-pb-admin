@@ -1,132 +1,28 @@
-import { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
-import dayjs from 'dayjs';
-import { useFieldArray, useForm } from 'react-hook-form';
 
-import { PostItemPriceHistoryCreateRequest } from '@src/api/pb/inventory/PbInventory.types';
-import usePostItemPriceHistoryMutation from '@src/api/pb/inventory/mutations/usePostItemPriceHistoryMutation';
-import usePbInventoryItemHistoryQuery from '@src/api/pb/inventory/queries/usePbInventoryItemHistoryQuery';
-import usePbInventoryItemQuery from '@src/api/pb/inventory/queries/usePbInventoryItemQuery';
 import Navigation from '@src/components/Navigation';
 import BigSquareButton from '@src/components/button/BigSquareButton';
 import FormInputDateRange from '@src/components/form/FormInputDateRange';
 import FormInputText from '@src/components/form/FormInputText';
-import { isValidEmpty, isValidNumber } from '@src/utils/valid';
 
 import InventoryNavigation from '../_components/InventoryNavigation';
+import useInventoryPriceHistoryPageController from '../_hooks/useInventoryPriceHistoryPageController';
 import S from '../_styles';
 
-interface InventoryPriceHistoryFormFields {
-  historyData: {
-    itemId: number;
-    itemName: string;
-    date: string;
-    unit: string;
-    price: string;
-  }[][];
-}
-
 const InventoryPriceHistoryPage = () => {
-  const [startDate, setStartDate] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
-  const [endDate, setEndDate] = useState(dayjs().format('YYYY-MM-DD'));
-
-  const { register, control, setValue, getValues } = useForm<InventoryPriceHistoryFormFields>({
-    defaultValues: {
-      historyData: [],
-    },
-  });
-
-  const { fields: historyDataFields } = useFieldArray({ control, name: 'historyData' });
-
-  const { data: allItemsData, status: allItemsDataStatus } = usePbInventoryItemQuery();
-
-  const { data: itemPriceHistoryData, status: itemPriceHistoryDataStatus } = usePbInventoryItemHistoryQuery({
+  const {
     startDate,
     endDate,
-  });
+    register,
+    getValues,
+    historyDataFields,
 
-  const { mutateAsync: postItemPriceHistory } = usePostItemPriceHistoryMutation();
+    allItemsQuery,
+    itemPriceHistoryQuery,
 
-  const onDateRangeChange = useCallback(({ startDate, endDate }: { startDate: string; endDate: string }) => {
-    setStartDate(startDate);
-    setEndDate(endDate);
-  }, []);
-
-  /*단가_히스토리_추가 */
-  const onUpsertClick = useCallback(
-    (dateIndex: number) => () => {
-      const values = getValues(`historyData.${dateIndex}`);
-
-      if (values.some(({ date, price }) => !isValidEmpty([date, price]))) {
-        alert('입력을 전부 채워주세요');
-        return;
-      }
-
-      if (values.some(({ price }) => !isValidNumber(price))) {
-        alert('가격은 숫자만 입력해주세요');
-        return;
-      }
-
-      const transformedData: PostItemPriceHistoryCreateRequest[] = values.map(({ date, itemId, price }) => ({
-        date,
-        itemId,
-        price: Number(price),
-      }));
-
-      postItemPriceHistory(transformedData);
-    },
-    [getValues, postItemPriceHistory],
-  );
-
-  useEffect(() => {
-    if (allItemsData && allItemsData.length > 0) {
-      const dates: string[] = [];
-      const start = dayjs(startDate);
-      const end = dayjs(endDate);
-
-      let currentDate = start;
-      while (currentDate.isSame(end) || currentDate.isBefore(end)) {
-        dates.push(currentDate.format('YYYY-MM-DD'));
-        currentDate = currentDate.add(1, 'day');
-      }
-
-      dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime()); // 내림차순
-
-      const transformedData: InventoryPriceHistoryFormFields['historyData'] = dates.map((dateStr) =>
-        allItemsData.map(({ id, name, unit }) => ({
-          itemId: id,
-          itemName: name,
-          date: dateStr,
-          price: '0', // 기본 가격은 0
-          unit,
-        })),
-      );
-
-      if (itemPriceHistoryData && itemPriceHistoryData.length > 0) {
-        for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
-          const currentDate = dates[dateIndex];
-
-          const currentDatePriceHistory = itemPriceHistoryData.filter((item) => item.date === currentDate);
-
-          for (let itemIndex = 0; itemIndex < transformedData[dateIndex].length; itemIndex++) {
-            const currentItem = transformedData[dateIndex][itemIndex];
-
-            const historyItem = currentDatePriceHistory.find((histItem) => histItem.itemId === currentItem.itemId);
-
-            if (historyItem) {
-              transformedData[dateIndex][itemIndex] = {
-                ...currentItem,
-
-                price: String(historyItem.price),
-              };
-            }
-          }
-        }
-      }
-
-      setValue('historyData', transformedData);
-    }
-  }, [allItemsData, startDate, endDate, itemPriceHistoryData, setValue]);
+    onDateRangeChange,
+    onUpsertClick,
+  } = useInventoryPriceHistoryPageController();
 
   return (
     <>
@@ -152,8 +48,8 @@ const InventoryPriceHistoryPage = () => {
               </S.FilterContainer>
 
               <div>
-                {itemPriceHistoryDataStatus === 'success' &&
-                  allItemsDataStatus === 'success' &&
+                {itemPriceHistoryQuery.status === 'success' &&
+                  allItemsQuery.status === 'success' &&
                   historyDataFields.length > 0 &&
                   historyDataFields.map((dateGroup, dateIndex) => {
                     const dateItems = getValues(`historyData.${dateIndex}`);
@@ -223,15 +119,15 @@ const InventoryPriceHistoryPage = () => {
                     );
                   })}
 
-                {itemPriceHistoryDataStatus === 'success' &&
-                  allItemsDataStatus === 'success' &&
+                {itemPriceHistoryQuery.status === 'success' &&
+                  allItemsQuery.status === 'success' &&
                   historyDataFields.length === 0 && <S.NoDataMessage>데이터가 존재하지 않습니다.</S.NoDataMessage>}
 
-                {(itemPriceHistoryDataStatus === 'pending' || allItemsDataStatus === 'pending') && (
+                {(itemPriceHistoryQuery.status === 'pending' || allItemsQuery.status === 'pending') && (
                   <S.NoDataMessage>로딩중</S.NoDataMessage>
                 )}
 
-                {(itemPriceHistoryDataStatus === 'error' || allItemsDataStatus === 'error') && (
+                {(itemPriceHistoryQuery.status === 'error' || allItemsQuery.status === 'error') && (
                   <S.NoDataMessage>데이터를 불러오는데 실패했습니다</S.NoDataMessage>
                 )}
               </div>

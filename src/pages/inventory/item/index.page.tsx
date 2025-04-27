@@ -1,86 +1,31 @@
-import { useCallback } from 'react';
 import Head from 'next/head';
-import { Controller, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 
-import { PbItemTaxType, PbItemType, PostInventoryItemRequest } from '@src/api/pb/inventory/PbInventory.types';
-import usePbInventoryPostItemMutation from '@src/api/pb/inventory/mutations/usePbInventoryPostItemMutation';
-import usePbInventoryItemQuery from '@src/api/pb/inventory/queries/usePbInventoryItemQuery';
 import Navigation from '@src/components/Navigation';
 import BigSquareButton from '@src/components/button/BigSquareButton';
 import SmallSquareButton from '@src/components/button/SmallSquareButton';
 import FormInputSelect from '@src/components/form/FormInputSelect';
 import FormInputText from '@src/components/form/FormInputText';
 
-import { isValidEmpty } from '@src/utils/valid';
 import InventoryNavigation from '../_components/InventoryNavigation';
 import { INVENTORY_ITEM_TYPE_SELECT_OPTIONS, INVENTORY_TAX_TYPE_SELECT_OPTIONS } from '../_core/options';
+import useInventoryItemPageController from '../_hooks/useInventoryItemPageController';
 import S from '../_styles';
 import { getInventoryItemTypeLabel, getInventoryTaxTypeLabel } from '../_utils/parse';
 
-interface InventoryItemFormFields {
-  itemData: {
-    name: string;
-    unit: string;
-    type: PbItemType | '';
-    taxType: PbItemTaxType | '';
-  }[];
-}
-
 const InventoryItemPage = () => {
-  const { register, control, handleSubmit } = useForm<InventoryItemFormFields>({
-    defaultValues: {
-      itemData: [
-        {
-          name: '',
-          unit: '',
-          type: '',
-          taxType: '',
-        },
-      ],
-    },
-  });
-
   const {
-    fields: itemDataFields,
-    append: appendItemData,
-    remove: removeItemData,
-  } = useFieldArray({ control, name: 'itemData' });
+    register,
+    control,
+    handleSubmit,
+    itemDataFields,
 
-  const { data: allItemsData, status: allItemsDataStatus } = usePbInventoryItemQuery();
+    allItemsQuery,
 
-  const { mutateAsync: postItem } = usePbInventoryPostItemMutation();
-
-  /* 단가_생성 */
-  const onItemAppendClick = useCallback(() => {
-    appendItemData({ name: '', taxType: '', type: '', unit: '' });
-  }, [appendItemData]);
-
-  const onItemRemoveClick = useCallback(
-    (index: number) => () => {
-      if (itemDataFields.length <= 1) return;
-      removeItemData(index);
-    },
-    [itemDataFields, removeItemData],
-  );
-
-  const onItemSubmit = useCallback<SubmitHandler<InventoryItemFormFields>>(
-    ({ itemData }) => {
-      if (itemData.some(({ name, taxType, type, unit }) => !isValidEmpty([name, taxType, type, unit]))) {
-        alert('입력을 전부 채워주세요');
-        return;
-      }
-
-      const transformedData: PostInventoryItemRequest[] = itemData.map(({ name, taxType, type, unit }) => ({
-        name,
-        taxType: taxType as PbItemTaxType,
-        type: type as PbItemType,
-        unit,
-      }));
-
-      postItem(transformedData);
-    },
-    [postItem],
-  );
+    onItemAppendClick,
+    onItemRemoveClick,
+    onItemSubmit,
+  } = useInventoryItemPageController();
 
   return (
     <>
@@ -189,9 +134,9 @@ const InventoryItemPage = () => {
                         <S.TableHeaderCell>세금타입</S.TableHeaderCell>
                       </tr>
                     </S.TableHeader>
-                    {allItemsDataStatus === 'success' && allItemsData.length > 0 && (
+                    {allItemsQuery.status === 'success' && allItemsQuery.data.length > 0 && (
                       <S.TableBody>
-                        {allItemsData.map(({ id, name, taxType, type, unit }) => (
+                        {allItemsQuery.data.map(({ id, name, taxType, type, unit }) => (
                           <S.TableRow key={id}>
                             <S.TableCell>
                               <FormInputText readOnly defaultValue={id} />
@@ -215,13 +160,15 @@ const InventoryItemPage = () => {
                   </S.Table>
                 </S.TableContainer>
 
-                {allItemsDataStatus === 'success' && allItemsData.length === 0 && (
+                {allItemsQuery.status === 'success' && allItemsQuery.data.length === 0 && (
                   <S.NoDataMessage>재료 데이터가 없습니다.</S.NoDataMessage>
                 )}
 
-                {allItemsDataStatus === 'pending' && <S.NoDataMessage>로딩중</S.NoDataMessage>}
+                {allItemsQuery.status === 'pending' && <S.NoDataMessage>로딩중</S.NoDataMessage>}
 
-                {allItemsDataStatus === 'error' && <S.NoDataMessage>데이터를 불러오는데 실패했습니다.</S.NoDataMessage>}
+                {allItemsQuery.status === 'error' && (
+                  <S.NoDataMessage>데이터를 불러오는데 실패했습니다.</S.NoDataMessage>
+                )}
               </div>
             </S.SectionCard>
           </S.SectionCardWrapper>
