@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useFieldArray, useForm } from 'react-hook-form';
 
-import PbInventoryApi from '@src/api/pb/inventory/PbInventory';
 import { PostItemPriceHistoryCreateRequest } from '@src/api/pb/inventory/PbInventory.types';
+import usePostItemPriceHistoryMutation from '@src/api/pb/inventory/mutations/usePostItemPriceHistoryMutation';
+import usePbInventoryItemHistoryQuery from '@src/api/pb/inventory/queries/usePbInventoryItemHistoryQuery';
+import usePbInventoryItemQuery from '@src/api/pb/inventory/queries/usePbInventoryItemQuery';
 import Navigation from '@src/components/Navigation';
 import BigSquareButton from '@src/components/button/BigSquareButton';
 import FormInputDateRange from '@src/components/form/FormInputDateRange';
@@ -37,29 +38,14 @@ const InventoryPriceHistoryPage = () => {
 
   const { fields: historyDataFields } = useFieldArray({ control, name: 'historyData' });
 
-  const queryClient = useQueryClient();
+  const { data: allItemsData, status: allItemsDataStatus } = usePbInventoryItemQuery();
 
-  const { data: itemPriceHistoryData, status: itemPriceHistoryDataStatus } = useQuery({
-    queryKey: [PbInventoryApi.getItemPriceHistoryApiKey, { start: startDate, end: endDate }] as const,
-    queryFn: ({ queryKey: [, { start, end }] }) => PbInventoryApi.getItemPriceHistory({ start, end }),
-    enabled: !!startDate && !!endDate,
+  const { data: itemPriceHistoryData, status: itemPriceHistoryDataStatus } = usePbInventoryItemHistoryQuery({
+    startDate,
+    endDate,
   });
 
-  const { data: allItemsData, status: allItemsDataStatus } = useQuery({
-    queryKey: [PbInventoryApi.getAllItemsApiKey],
-    queryFn: () => PbInventoryApi.getAllItems(),
-  });
-
-  const { mutate: postItemPriceHistory } = useMutation({
-    mutationFn: PbInventoryApi.postItemPriceHistory,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [PbInventoryApi.getItemPriceHistoryApiKey] });
-      alert('저장되었습니다.');
-    },
-    onError: () => {
-      alert('저장하는데 실패했습니다.');
-    },
-  });
+  const { mutateAsync: postItemPriceHistory } = usePostItemPriceHistoryMutation();
 
   const onDateRangeChange = useCallback(({ startDate, endDate }: { startDate: string; endDate: string }) => {
     setStartDate(startDate);

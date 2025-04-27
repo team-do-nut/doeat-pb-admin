@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import Head from 'next/head';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Controller, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
 
-import PbInventoryApi from '@src/api/pb/inventory/PbInventory';
 import { PbItemTaxType, PbItemType, PostInventoryItemRequest } from '@src/api/pb/inventory/PbInventory.types';
+import usePbInventoryPostItemMutation from '@src/api/pb/inventory/mutations/usePbInventoryPostItemMutation';
+import usePbInventoryItemQuery from '@src/api/pb/inventory/queries/usePbInventoryItemQuery';
 import Navigation from '@src/components/Navigation';
 import BigSquareButton from '@src/components/button/BigSquareButton';
 import SmallSquareButton from '@src/components/button/SmallSquareButton';
@@ -46,23 +46,9 @@ const InventoryItemPage = () => {
     remove: removeItemData,
   } = useFieldArray({ control, name: 'itemData' });
 
-  const queryClient = useQueryClient();
+  const { data: allItemsData, status: allItemsDataStatus } = usePbInventoryItemQuery();
 
-  const { data: allItemsData, status: allItemsDataStatus } = useQuery({
-    queryKey: [PbInventoryApi.getAllItemsApiKey],
-    queryFn: () => PbInventoryApi.getAllItems(),
-  });
-
-  const { mutate: postItem } = useMutation({
-    mutationFn: PbInventoryApi.postItem,
-    onSuccess: async () => {
-      alert('재료 품목 생성 완료!');
-      await queryClient.invalidateQueries({ queryKey: [PbInventoryApi.getAllItemsApiKey] });
-    },
-    onError: () => {
-      alert('재료 품목 생성하는데 실패했습니다.');
-    },
-  });
+  const { mutateAsync: postItem } = usePbInventoryPostItemMutation();
 
   /* 단가_생성 */
   const onItemAppendClick = useCallback(() => {

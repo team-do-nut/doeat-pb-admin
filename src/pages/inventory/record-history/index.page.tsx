@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useFieldArray, useForm } from 'react-hook-form';
 
-import PbInventoryApi from '@src/api/pb/inventory/PbInventory';
 import type { InventoryType, PostInventoryRecordRequest } from '@src/api/pb/inventory/PbInventory.types';
+import usePostInventoryRecords from '@src/api/pb/inventory/mutations/usePostInventoryRecords';
+import usePbInventoryItemQuery from '@src/api/pb/inventory/queries/usePbInventoryItemQuery';
+import usePbInventoryRecordQuery from '@src/api/pb/inventory/queries/usePbInventoryRecordQuery';
 import Navigation from '@src/components/Navigation';
 import BigSquareButton from '@src/components/button/BigSquareButton';
 import FormInputDateRange from '@src/components/form/FormInputDateRange';
@@ -42,35 +43,14 @@ const InventoryRecordHistoryPage = () => {
 
   const { fields: newDataFields } = useFieldArray({ control, name: 'newData' });
 
-  const queryClient = useQueryClient();
+  const { data: allItemsData, status: allItemsDataStatus } = usePbInventoryItemQuery();
 
-  const { data: inventoryRecordsData, status: inventoryRecordsDataStatus } = useQuery({
-    queryKey: [PbInventoryApi.getInventoryRecordsApiKey, { start: startDate, end: endDate }] as const,
-    queryFn: ({ queryKey: [, { start, end }] }) => PbInventoryApi.getInventoryRecords({ start, end }),
-    enabled: !!startDate && !!endDate,
+  const { data: inventoryRecordsData, status: inventoryRecordsDataStatus } = usePbInventoryRecordQuery({
+    startDate,
+    endDate,
   });
 
-  const { data: allItemsData, status: allItemsDataStatus } = useQuery({
-    queryKey: [PbInventoryApi.getAllItemsApiKey],
-    queryFn: () => PbInventoryApi.getAllItems(),
-  });
-
-  const onMutateSuccess = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: [PbInventoryApi.getInventoryRecordsApiKey],
-    });
-    alert('저장 성공');
-  }, [queryClient]);
-
-  const onMutateError = useCallback(() => {
-    alert('재고 히스토리를 저장하는데 실패했습니다.');
-  }, []);
-
-  const { mutate: postInventoryRecords } = useMutation({
-    mutationFn: PbInventoryApi.postInventoryRecords,
-    onSuccess: onMutateSuccess,
-    onError: onMutateError,
-  });
+  const { mutateAsync: postInventoryRecords } = usePostInventoryRecords();
 
   const onInventoryTypeChange = useCallback((value: string) => {
     setInventoryType(value as InventoryType);
