@@ -124,7 +124,7 @@ export default defineConfig([
 
   // React Hooks 설정
   {
-    files: ['**/*.{jsx,tsx}'],
+    files: ['**/*.{jsx,tsx,ts}'],
     plugins: {
       'react-hooks': reactHooksPlugin,
     },
