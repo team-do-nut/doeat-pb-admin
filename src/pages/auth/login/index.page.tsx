@@ -1,11 +1,10 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { useMutation } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import AuthApi from '@src/api/auth/AuthApi';
 import { PostAuthError } from '@src/api/auth/AuthApi.types';
+import usePostAuthLoginMutation from '@src/api/auth/mutations/usePostAuthLoginMutation';
 import BigSquareButton from '@src/components/button/BigSquareButton';
 import FormInputText from '@src/components/form/FormInputText';
 import { setAccessToken } from '@src/libs/axios/apiClient';
@@ -26,26 +25,25 @@ const AuthLoginPage = () => {
     formState: { errors },
   } = useForm<AuthLoginFormFields>();
 
-  const { mutate: loginMutate, isPending } = useMutation({
-    mutationFn: AuthApi.postAuthLogin,
-    onSuccess: ({ data: { token } }) => {
-      setAccessToken(token);
-      replace('/', undefined, { shallow: false, scroll: true });
-    },
-    onError: (err) => {
-      if (isAxiosError(err)) {
-        alert((err.response?.data as PostAuthError).errorMessage);
-      } else {
-        alert('UNKNOWN_ERROR');
-      }
-    },
-  });
+  const { mutateAsync: loginMutate, isPending } = usePostAuthLoginMutation();
 
   const onSubmit = useCallback<SubmitHandler<AuthLoginFormFields>>(
-    ({ id, pw }) => {
-      loginMutate({ id, pw });
+    async ({ id, pw }) => {
+      try {
+        const {
+          data: { token },
+        } = await loginMutate({ id, pw });
+        setAccessToken(token);
+        replace('/', undefined, { shallow: false, scroll: true });
+      } catch (err) {
+        if (isAxiosError(err)) {
+          alert((err.response?.data as PostAuthError).errorMessage);
+        } else {
+          alert('UNKNOWN_ERROR');
+        }
+      }
     },
-    [loginMutate],
+    [loginMutate, replace],
   );
 
   return (
