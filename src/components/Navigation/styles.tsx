@@ -45,6 +45,11 @@ export const StyledLink = styled(Link)<{ selected?: boolean }>`
   }
 `;
 
+export const HiddenTitle = styled.span`
+  color: red;
+  font-weight: 500;
+`;
+
 export const LogoutButton = styled.button`
   background-color: #f8f9fa;
   color: #333;

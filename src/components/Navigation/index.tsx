@@ -39,6 +39,8 @@ const Navigation: FC = () => {
           재고 관리
         </S.StyledLink>
       </S.NavLinks>
+
+      {process.env.NODE_ENV !== 'production' && <S.HiddenTitle>DEV 환경</S.HiddenTitle>}
       <S.LogoutButton onClick={onLogoutClick}>로그아웃</S.LogoutButton>
     </S.NavContainer>
   );
