@@ -6,6 +6,8 @@ import { PostItemPriceHistoryCreateRequest } from '@src/api/pb/inventory/PbInven
 import usePostItemPriceHistoryMutation from '@src/api/pb/inventory/mutations/usePostItemPriceHistoryMutation';
 import usePbInventoryItemHistoryQuery from '@src/api/pb/inventory/queries/usePbInventoryItemHistoryQuery';
 import usePbInventoryItemQuery from '@src/api/pb/inventory/queries/usePbInventoryItemQuery';
+
+import { useStore } from '@src/core/StoreProvider';
 import { isValidEmpty, isValidNumber } from '@src/utils/valid';
 
 interface InventoryPriceHistoryFormFields {
@@ -30,6 +32,8 @@ function useInventoryPriceHistoryPageController() {
 
   const { fields: historyDataFields } = useFieldArray({ control, name: 'historyData' });
 
+  const { storeId } = useStore();
+
   const allItemsQuery = usePbInventoryItemQuery();
 
   const itemPriceHistoryQuery = usePbInventoryItemHistoryQuery({
@@ -46,6 +50,8 @@ function useInventoryPriceHistoryPageController() {
 
   const onUpsertClick = useCallback(
     (dateIndex: number) => () => {
+      if (!storeId) return;
+
       const values = getValues(`historyData.${dateIndex}`);
 
       if (values.some(({ date, price }) => !isValidEmpty([date, price]))) {
@@ -62,11 +68,12 @@ function useInventoryPriceHistoryPageController() {
         date,
         itemId,
         price: Number(price),
+        storeId,
       }));
 
       postItemPriceHistory(transformedData);
     },
-    [getValues, postItemPriceHistory],
+    [getValues, postItemPriceHistory, storeId],
   );
 
   useEffect(() => {

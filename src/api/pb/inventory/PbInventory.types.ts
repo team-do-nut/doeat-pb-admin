@@ -25,6 +25,7 @@ export interface PostInventoryRecordRequest {
   quantity: number;
   type: InventoryType;
   date: string;
+  storeId: number;
 }
 
 export interface PutInventoryRecordRequest extends PostInventoryRecordRequest {
@@ -34,11 +35,12 @@ export interface PutInventoryRecordRequest extends PostInventoryRecordRequest {
 export interface InventoryRecordsDto {
   id: number;
   itemId: number;
-  quantity: number;
-  type: InventoryType;
   date: string;
   createdAt: string;
   lastModifiedAt: string;
+  quantity: number;
+  type: InventoryType;
+  storeId: number;
 }
 
 /* Item */
@@ -73,4 +75,5 @@ export interface PostItemPriceHistoryCreateRequest {
   itemId: number;
   price: number;
   date: string;
+  storeId: number;
 }

@@ -6,6 +6,7 @@ import { InventoryType, PostInventoryRecordRequest } from '@src/api/pb/inventory
 import usePostInventoryRecords from '@src/api/pb/inventory/mutations/usePostInventoryRecords';
 import usePbInventoryItemQuery from '@src/api/pb/inventory/queries/usePbInventoryItemQuery';
 import usePbInventoryRecordQuery from '@src/api/pb/inventory/queries/usePbInventoryRecordQuery';
+import { useStore } from '@src/core/StoreProvider';
 import { isValidEmpty, isValidNumber } from '@src/utils/valid';
 
 interface InventoryRecordHistoryFormFields {
@@ -32,6 +33,8 @@ function useInventoryRecordHistoryPageController() {
 
   const { fields: newDataFields } = useFieldArray({ control, name: 'newData' });
 
+  const { storeId } = useStore();
+
   const allItemsQuery = usePbInventoryItemQuery();
 
   const inventoryRecordsQuery = usePbInventoryRecordQuery({
@@ -52,6 +55,8 @@ function useInventoryRecordHistoryPageController() {
 
   const onUpsertClick = useCallback(
     (dateIndex: number) => () => {
+      if (!storeId) return;
+
       const values = getValues(`newData.${dateIndex}`);
 
       if (values.some(({ quantity, inventoryType }) => !isValidEmpty([quantity, inventoryType]))) {
@@ -69,11 +74,12 @@ function useInventoryRecordHistoryPageController() {
         itemId,
         quantity: Number(quantity),
         type: inventoryType as InventoryType,
+        storeId,
       }));
 
       postInventoryRecords(transformedData);
     },
-    [getValues, postInventoryRecords],
+    [getValues, postInventoryRecords, storeId],
   );
 
   useEffect(() => {
