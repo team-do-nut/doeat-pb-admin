@@ -83,7 +83,7 @@ const ApiAuthLoginHandler = async (
 
     res.setHeader('Set-Cookie', [authCookie, storeCookie]);
 
-    return res.status(200).json({ token });
+    return res.status(200).json({ token, storeId });
   } catch (err) {
     console.error('ERROR', err);
     return res.status(500).json({ errorMessage: 'INTERNAL SERVER ERROR' });

@@ -5,6 +5,7 @@ export interface PostAuthLoginRequest {
 
 export interface PostAuthLoginResponse {
   token: string;
+  storeId: number;
 }
 
 export interface PostAuthError {

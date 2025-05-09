@@ -4,16 +4,19 @@ import { useMutation } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import AuthApi from '@src/api/auth/AuthApi';
 import { PostAuthError } from '@src/api/auth/AuthApi.types';
+import { useStore } from '@src/core/StoreProvider';
 import { clearAccessToken } from '@src/libs/axios/apiClient';
 import * as S from './styles';
 
 const Navigation: FC = () => {
   const { replace, pathname } = useRouter();
+  const { setStoreId } = useStore();
 
   const { mutate: logoutMutate } = useMutation({
     mutationFn: AuthApi.postAuthLogout,
     onSuccess: () => {
       clearAccessToken();
+      setStoreId(null);
       replace('/auth/login');
     },
     onError: (err) => {

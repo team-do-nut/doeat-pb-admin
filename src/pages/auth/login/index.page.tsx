@@ -7,6 +7,7 @@ import { PostAuthError } from '@src/api/auth/AuthApi.types';
 import usePostAuthLoginMutation from '@src/api/auth/mutations/usePostAuthLoginMutation';
 import BigSquareButton from '@src/components/button/BigSquareButton';
 import FormInputText from '@src/components/form/FormInputText';
+import { useStore } from '@src/core/StoreProvider';
 import { setAccessToken } from '@src/libs/axios/apiClient';
 
 import S from './_styles';
@@ -25,15 +26,19 @@ const AuthLoginPage = () => {
     formState: { errors },
   } = useForm<AuthLoginFormFields>();
 
+  const { setStoreId } = useStore();
+
   const { mutateAsync: loginMutate, isPending } = usePostAuthLoginMutation();
 
   const onSubmit = useCallback<SubmitHandler<AuthLoginFormFields>>(
     async ({ id, pw }) => {
       try {
         const {
-          data: { token },
+          data: { token, storeId },
         } = await loginMutate({ id, pw });
         setAccessToken(token);
+        setStoreId(storeId);
+
         replace('/', undefined, { shallow: false, scroll: true });
       } catch (err) {
         if (isAxiosError(err)) {
@@ -43,7 +48,7 @@ const AuthLoginPage = () => {
         }
       }
     },
-    [loginMutate, replace],
+    [loginMutate, replace, setStoreId],
   );
 
   return (
