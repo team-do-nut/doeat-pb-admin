@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Navigation from '@src/components/Navigation';
+import { getStoreId } from '@src/utils/getStoreId';
 
 const Home = () => (
   <>
@@ -13,6 +14,7 @@ const Home = () => (
       <Navigation />
       <main>
         <h1>PB Admin V1.0.0</h1>
+        <h3>스토어: {getStoreId()}</h3>
       </main>
     </div>
   </>

@@ -1,7 +1,7 @@
 import { serialize } from 'cookie';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PostAuthError } from '@src/api/auth/AuthApi.types';
-import { ACCESS_TOKEN_KEY } from '@src/constants/api/authKey';
+import { ACCESS_STORE_ID, ACCESS_TOKEN_KEY } from '@src/constants/api/authKey';
 
 const ApiAuthLogoutHandler = async (req: NextApiRequest, res: NextApiResponse<null | PostAuthError>) => {
   if (req.method !== 'POST') {
@@ -9,7 +9,7 @@ const ApiAuthLogoutHandler = async (req: NextApiRequest, res: NextApiResponse<nu
   }
 
   try {
-    const cookie = serialize(ACCESS_TOKEN_KEY, '', {
+    const authCookie = serialize(ACCESS_TOKEN_KEY, '', {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
       expires: new Date(0),
@@ -17,7 +17,15 @@ const ApiAuthLogoutHandler = async (req: NextApiRequest, res: NextApiResponse<nu
       sameSite: 'strict',
     });
 
-    res.setHeader('Set-Cookie', cookie);
+    const storeCookie = serialize(ACCESS_STORE_ID, '', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV !== 'development',
+      expires: new Date(0),
+      path: '/',
+      sameSite: 'strict',
+    });
+
+    res.setHeader('Set-Cookie', [authCookie, storeCookie]);
 
     return res.status(200).json(null);
   } catch (err) {
